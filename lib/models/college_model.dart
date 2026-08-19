@@ -1,23 +1,23 @@
-import 'package:flutter/foundation.dart';
 
 enum StudyShift { morning, parallel, evening }
 
-/// Wrapper model for any learning mode that has GPA requirements and payment costs
 class ShiftInfo {
   final StudyShift shift;
   final double requiredGpa;
-  final int cost; // Tuition fee (0 if free)
+  final int cost;
+  final int id;
 
   const ShiftInfo({
     required this.shift,
     required this.requiredGpa,
     this.cost = 0,
+    this.id=0,
   });
 
   factory ShiftInfo.fromJson(Map<String, dynamic> json) {
     return ShiftInfo(
       shift: _shiftFromString(json['shift'] as String? ?? 'morning'),
-      requiredGpa: (json['required_gpa'] as num?)?.toDouble() ?? 0.0,
+      requiredGpa: (json['requiredGpa'] ?? json['required_gpa'] as num?)?.toDouble() ?? 0.0,
       cost: (json['cost'] as num?)?.toInt() ?? 0,
     );
   }
@@ -25,7 +25,7 @@ class ShiftInfo {
   Map<String, dynamic> toJson() {
     return {
       'shift': shift.name,
-      'required_gpa': requiredGpa,
+      'requiredGpa': requiredGpa,
       'cost': cost,
     };
   }
@@ -44,22 +44,24 @@ class ShiftInfo {
 }
 
 class CollegeModel {
-  final String id;
-  final String name; // اسم الكلية
-  final String universityName; // اسم الجامعة
-  final String city; // المحافظة
-  final bool isPrivate; // نوع الكلية: حكومي أم أهلي
-  final List<ShiftInfo> shiftOptions; // قائمة قنوات الدراسة المتاحة
+  final int id;
+  final String name;
+  final String universityName;
+  final String city;
+  final bool isPrivate;
   final String logoUrl;
   final String overview;
-  final List<String> careerFields;
   final String establishedYear;
   final String recognitionDocNumber;
-  final List<String> departments;
   final String? extraInfo;
+  final List<String> departments;
+  final List<String> careerFields;
   final double latitude;
   final double longitude;
+  final String? gender;
+  final String? studyType;
   final String? address;
+  final List<ShiftInfo> shiftOptions;
 
   const CollegeModel({
     required this.id,
@@ -67,55 +69,86 @@ class CollegeModel {
     required this.universityName,
     required this.city,
     required this.isPrivate,
-    required this.shiftOptions,
     required this.logoUrl,
     required this.overview,
-    required this.careerFields,
     required this.establishedYear,
     required this.recognitionDocNumber,
+    this.extraInfo,
     required this.departments,
+    required this.careerFields,
     required this.latitude,
     required this.longitude,
-    this.extraInfo,
+    this.gender,
+    this.studyType,
     this.address,
+    required this.shiftOptions,
   });
 
-  /// Helper getter: Finds the shift option for the requested shift type
   ShiftInfo? getShift(StudyShift shift) {
     try {
       return shiftOptions.firstWhere((info) => info.shift == shift);
     } catch (_) {
-      return null; // Return null if this college doesn't support the requested shift
+      // Fallback shift using root minimumGpa if shiftOptions isn't populated
+      if (shift == StudyShift.morning) {
+        return ShiftInfo(shift: StudyShift.morning, requiredGpa: shiftOptions[0].requiredGpa);
+      }
+      return null;
     }
   }
 
   factory CollegeModel.fromJson(Map<String, dynamic> json) {
+    // Extract university name from nested UniversityDto object
+    String uniName = '';
+    if (json['university'] is Map<String, dynamic>) {
+      uniName = json['university']['name'] as String? ?? '';
+    } else if (json['universityName'] != null) {
+      uniName = json['universityName'] as String;
+    }
+
+    // Extract department names from Set<DepartmentDto>
+    List<String> parsedDepartments = [];
+    if (json['departments'] is List) {
+      parsedDepartments = (json['departments'] as List).map((e) {
+        if (e is Map<String, dynamic>) return e['name'] as String? ?? '';
+        return e.toString();
+      }).toList();
+    }
+
+    // Extract career field names from Set<CarrerFeildDto>
+    List<String> parsedCareerFields = [];
+    if (json['careerFields'] is List) {
+      parsedCareerFields = (json['careerFields'] as List).map((e) {
+        if (e is Map<String, dynamic>) return e['name'] as String? ?? '';
+        return e.toString();
+      }).toList();
+    }
+
+    double rootGpa = (json['minimumGpa'] as num?)?.toDouble() ?? 0.0;
+
     return CollegeModel(
-      id: json['id'] as String? ?? '',
+      id: (json['id'] as num?)?.toInt() ?? 0,
       name: json['name'] as String? ?? '',
-      universityName: json['university_name'] as String? ?? '',
+      universityName: uniName,
       city: json['city'] as String? ?? '',
-      isPrivate: json['is_private'] as bool? ?? false,
-      shiftOptions: (json['shift_options'] as List<dynamic>?)
-              ?.map((e) => ShiftInfo.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-      logoUrl: json['logo_url'] as String? ?? '',
+      isPrivate: json['isPrivate'] as bool? ?? false,
+      logoUrl: json['logoUrl'] as String? ?? '',
       overview: json['overview'] as String? ?? '',
-      careerFields: (json['career_fields'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      establishedYear: json['established_year'] as String? ?? '',
-      recognitionDocNumber: json['recognition_doc_number'] as String? ?? '',
-      departments: (json['departments'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      extraInfo: json['extra_info'] as String?,
+      establishedYear: json['establishedYear'] as String? ?? '',
+      recognitionDocNumber: json['recognitionDocNumber'] as String? ?? '',
+      extraInfo: json['extraInfo'] as String?,
+      departments: parsedDepartments,
+      careerFields: parsedCareerFields,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      gender: json['gender'] as String?,
+      studyType: json['studyType'] as String?,
       address: json['address'] as String?,
+      shiftOptions: (json['shift'] as List<dynamic>?)
+              ?.map((e) => ShiftInfo.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [
+            ShiftInfo(shift: StudyShift.morning, requiredGpa: rootGpa)
+          ],
     );
   }
 
@@ -123,20 +156,22 @@ class CollegeModel {
     return {
       'id': id,
       'name': name,
-      'university_name': universityName,
+      'university': {'name': universityName},
       'city': city,
-      'is_private': isPrivate,
-      'shift_options': shiftOptions.map((e) => e.toJson()).toList(),
-      'logo_url': logoUrl,
+      'isPrivate': isPrivate,
+      'logoUrl': logoUrl,
       'overview': overview,
-      'career_fields': careerFields,
-      'established_year': establishedYear,
-      'recognition_doc_number': recognitionDocNumber,
-      'departments': departments,
-      'extra_info': extraInfo,
+      'establishedYear': establishedYear,
+      'recognitionDocNumber': recognitionDocNumber,
+      'extraInfo': extraInfo,
+      'departments': departments.map((d) => {'name': d}).toList(),
+      'careerFields': careerFields.map((c) => {'name': c}).toList(),
       'latitude': latitude,
       'longitude': longitude,
+      'gender': gender,
+      'studyType': studyType,
       'address': address,
+      'shift': shiftOptions.map((e) => e.toJson()).toList(),
     };
   }
 }

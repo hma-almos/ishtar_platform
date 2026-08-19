@@ -1,21 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:ishtar_platform/Service/api_service.dart';
+import 'package:ishtar_platform/models/college_model.dart';
 import 'package:ishtar_platform/universityTab/admission_search_screen.dart';
 import 'package:ishtar_platform/universityTab/application_channels_screen.dart';
 import 'package:ishtar_platform/universityTab/equivalent_departments_screen.dart';
 import 'package:ishtar_platform/universityTab/minimum_limits_screen.dart';
 import 'package:ishtar_platform/universityTab/search_screen.dart';
 
-class UniversitiesScreen extends StatelessWidget {
+class UniversitiesScreen extends StatefulWidget {
   final double navBarHeight;
+
   const UniversitiesScreen({super.key, this.navBarHeight = 80});
 
   @override
+  State<UniversitiesScreen> createState() => _UniversitiesScreenState();
+}
+
+class _UniversitiesScreenState extends State<UniversitiesScreen> {
+  late final Future<List<CollegeModel>> _collegesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch colleges once on screen initialization
+    _collegesFuture = ApiService().getAll<CollegeModel>(
+      'collage/all',
+      CollegeModel.fromJson,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Data lists for items
+    // Grid items configuration
     final List<_GridItemData> publicItems = [
       const _GridItemData(title: 'التقديم', icon: Icons.wb_sunny_rounded, color: Color(0xFFE65100)),
-      // const _GridItemData(title: 'التقديم الموازي', icon: Icons.trending_up_rounded, color: Color(0xFF0288D1)),
-      // const _GridItemData(title: 'التقديم المسائي', icon: Icons.nights_stay_rounded, color: Color(0xFF5E35B1)),
       const _GridItemData(title: 'الحدود الدنيا', icon: Icons.show_chart_rounded, color: Color(0xFF2E7D32)),
       const _GridItemData(title: 'الانسيابية', icon: Icons.format_list_bulleted_rounded, color: Color(0xFFD81B60)),
       const _GridItemData(title: 'قنوات التقديم', icon: Icons.post_add_rounded, color: Color(0xFF00897B)),
@@ -23,9 +41,7 @@ class UniversitiesScreen extends StatelessWidget {
 
     final List<_GridItemData> privateItems = [
       const _GridItemData(title: 'التقديم', icon: Icons.wb_sunny_rounded, color: Color(0xFFE65100)),
-      // const _GridItemData(title: 'التقديم المسائي', icon: Icons.nights_stay_rounded, color: Color(0xFF5E35B1)),
       const _GridItemData(title: 'الحدود الدنيا', icon: Icons.show_chart_rounded, color: Color(0xFF2E7D32)),
-      // const _GridItemData(title: 'البحث عن قسم', icon: Icons.manage_search_rounded, color: Color(0xFF00ACC1)),
       const _GridItemData(title: 'الاقسام المناظرة', icon: Icons.tune_rounded, color: Color(0xFF8E24AA)),
     ];
 
@@ -37,7 +53,7 @@ class UniversitiesScreen extends StatelessWidget {
           left: 16,
           right: 16,
           top: 20,
-          bottom: navBarHeight + 20.0,
+          bottom: widget.navBarHeight + 20.0,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +66,7 @@ class UniversitiesScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildGrid(publicItems, isPublicSection: true),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // --- SECTION 2: Private Universities ---
             const _SectionHeader(
@@ -72,10 +88,10 @@ class UniversitiesScreen extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 1,     // Set to 2 columns
-        crossAxisSpacing: 10,  // Space between columns
-        mainAxisSpacing: 10,   // Space between rows
-        mainAxisExtent: 72,    // Fixed height for each grid card
+        crossAxisCount: 1,     
+        crossAxisSpacing: 10,  // Horizontal spacing
+        mainAxisSpacing: 10,   // Vertical spacing
+        mainAxisExtent: 72,    // Height per grid card
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -93,6 +109,7 @@ class UniversitiesScreen extends StatelessWidget {
                     mode: isPublicSection
                         ? MinimumLimitsMode.publicSearch
                         : MinimumLimitsMode.privateSearch,
+                    initialColleges: _collegesFuture,
                   ),
                 ),
               );
@@ -120,6 +137,7 @@ class UniversitiesScreen extends StatelessWidget {
                   builder: (context) => AdmissionSearchScreen(
                     title: item.title,
                     isPrivate: !isPublicSection,
+                    initialColleges: _collegesFuture,
                   ),
                 ),
               );
@@ -222,7 +240,7 @@ class _MenuItemGridCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Row(
               children: [
-                // 1. TEXT (Left side in RTL)
+                // TEXT (Left side in RTL)
                 Expanded(
                   child: Text(
                     title,
@@ -241,7 +259,7 @@ class _MenuItemGridCard extends StatelessWidget {
 
                 const SizedBox(width: 8),
 
-                // 2. ICON BADGE (Right side in RTL)
+                // ICON BADGE (Right side in RTL)
                 Container(
                   width: 40,
                   height: 40,

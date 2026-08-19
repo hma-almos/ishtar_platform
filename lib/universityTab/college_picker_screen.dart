@@ -18,7 +18,7 @@ class CollegePickerScreen extends StatefulWidget {
 }
 
 class _CollegePickerScreenState extends State<CollegePickerScreen> {
-  late Set<String> _selectedCollegeIds;
+  late Set<int> _selectedCollegeIds;
   late List<CollegeModel> _selectedColleges;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();

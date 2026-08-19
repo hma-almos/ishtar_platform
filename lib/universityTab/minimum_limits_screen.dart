@@ -3,19 +3,18 @@ import 'package:ishtar_platform/models/college_model.dart';
 import 'package:ishtar_platform/universityTab/college_details_screen.dart';
 import 'package:ishtar_platform/widgets/college_card_tile.dart';
 
-/// Define the 3 Use Cases for the screen
 enum MinimumLimitsMode {
-  minimumLimits, // 1. General Minimum Limits list
-  publicSearch,  // 2. Public University admission search results
-  privateSearch, // 3. Private University admission search results
+  minimumLimits,
+  publicSearch,
+  privateSearch,
 }
 
 class MinimumLimitsScreen extends StatefulWidget {
   final String title;
   final MinimumLimitsMode mode;
   final double? userGpa;
-  final List<CollegeModel>? initialColleges; // Added for reusable search results
-  final StudyShift? initialShift; // Optional pre-selected shift
+  final Future<List<CollegeModel>>? initialColleges;
+  final StudyShift? initialShift;
 
   const MinimumLimitsScreen({
     super.key,
@@ -40,77 +39,14 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
   late StudyShift _selectedShift;
 
   final TextEditingController _searchController = TextEditingController();
-
-  // Default Mock Dataset (Fallback if no external list is passed)
-  final List<CollegeModel> _defaultColleges = [
-    const CollegeModel(
-      id: 'col_01',
-      name: 'كلية الطب البشري',
-      universityName: 'جامعة بغداد',
-      city: 'بغداد',
-      isPrivate: false,
-      logoUrl: '',
-      overview: 'كلية الطب البشري في جامعة بغداد أعرق الكليات الطبية.',
-      careerFields: ['مستشفيات', 'عيادات خاصة'],
-      establishedYear: '1927',
-      recognitionDocNumber: '101/2000',
-      departments: ['الطب العام', 'الجراحة'],
-      latitude: 33.3128,
-      longitude: 44.3615,
-      shiftOptions: [
-        ShiftInfo(shift: StudyShift.morning, requiredGpa: 99.1, cost: 0),
-        ShiftInfo(shift: StudyShift.parallel, requiredGpa: 96.5, cost: 3500000),
-        ShiftInfo(shift: StudyShift.evening, requiredGpa: 94.0, cost: 4500000),
-      ],
-    ),
-    const CollegeModel(
-      id: 'col_02',
-      name: 'كلية طب الأسنان',
-      universityName: 'جامعة الفراهيدي الأهلية',
-      city: 'بغداد',
-      isPrivate: true,
-      logoUrl: '',
-      overview: 'كلية طب الأسنان في جامعة الفراهيدي الأهلية.',
-      careerFields: ['عيادات الأسنان', 'مراكز التجميل'],
-      establishedYear: '2012',
-      recognitionDocNumber: '202/2012',
-      departments: ['طب وجراحة الفم والأسنان'],
-      latitude: 33.2800,
-      longitude: 44.3900,
-      shiftOptions: [
-        ShiftInfo(shift: StudyShift.morning, requiredGpa: 80.0, cost: 8500000),
-        ShiftInfo(shift: StudyShift.evening, requiredGpa: 78.0, cost: 9000000),
-      ],
-    ),
-    const CollegeModel(
-      id: 'col_03',
-      name: 'كلية الهندسة - قسم البرمجيات',
-      universityName: 'الجامعة التكنولوجية',
-      city: 'بغداد',
-      isPrivate: false,
-      logoUrl: '',
-      overview: 'تعنى بتأهيل مهندسي البرمجيات والذكاء الاصطناعي.',
-      careerFields: ['تطوير التطبيقات', 'الأمن السيبراني'],
-      establishedYear: '1975',
-      recognitionDocNumber: '102/2001',
-      departments: ['هندسة البرمجيات'],
-      latitude: 33.3152,
-      longitude: 44.4468,
-      shiftOptions: [
-        ShiftInfo(shift: StudyShift.morning, requiredGpa: 88.5, cost: 0),
-        ShiftInfo(shift: StudyShift.parallel, requiredGpa: 84.0, cost: 1500000),
-        ShiftInfo(shift: StudyShift.evening, requiredGpa: 80.0, cost: 2000000),
-      ],
-    ),
-  ];
-
-  /// Resolves which dataset to use (passed external list or default mock data)
-  List<CollegeModel> get _collegesSource =>
-      widget.initialColleges ?? _defaultColleges;
+  
+  // Asynchronous API call definition
+  late Future<List<CollegeModel>> _collegesFuture;
 
   @override
   void initState() {
     super.initState();
+    
     // Safety check: Private education doesn't support Parallel shift
     if (widget.mode == MinimumLimitsMode.privateSearch &&
         widget.initialShift == StudyShift.parallel) {
@@ -118,6 +54,11 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
     } else {
       _selectedShift = widget.initialShift ?? StudyShift.morning;
     }
+
+    // Initialize API request if external list wasn't provided
+    if (widget.initialColleges != null) {
+      _collegesFuture = Future.value(widget.initialColleges);
+    } 
   }
 
   @override
@@ -126,17 +67,9 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF1B4980);
-    const Color backgroundColor = Color(0xFFE3EBF5);
-    const Color filterBgColor = Color(0xFF133660);
-
-    final bool hasActiveFilters = _selectedSpecialty != null ||
-        _selectedGovernorate != null ||
-        _searchQuery.isNotEmpty;
-
-    final filteredColleges = _collegesSource.where((college) {
+  /// Filters loaded colleges based on user controls
+  List<CollegeModel> _applyFilters(List<CollegeModel> rawList) {
+    return rawList.where((college) {
       // 1. Strict Mode Filter: Public vs Private
       if (widget.mode == MinimumLimitsMode.publicSearch && college.isPrivate) {
         return false;
@@ -145,12 +78,12 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
         return false;
       }
 
-      // 2. Parallel shift check: Only public universities offer Parallel
+      // 2. Parallel shift check
       if (_selectedShift == StudyShift.parallel && college.isPrivate) {
         return false;
       }
 
-      // 3. Extract active shift details from model
+      // 3. Extract active shift details
       final activeShift = college.getShift(_selectedShift);
       if (activeShift == null) return false;
 
@@ -177,6 +110,17 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
 
       return matchesGovernorate && matchesSpecialty;
     }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primaryColor = Color(0xFF1B4980);
+    const Color backgroundColor = Color(0xFFE3EBF5);
+    const Color filterBgColor = Color(0xFF133660);
+
+    final bool hasActiveFilters = _selectedSpecialty != null ||
+        _selectedGovernorate != null ||
+        _searchQuery.isNotEmpty;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -269,7 +213,6 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildTypeChip('الصباحي (العام)', StudyShift.morning),
-                      // Hide Parallel shift completely for Private Colleges Search Mode
                       if (widget.mode != MinimumLimitsMode.privateSearch) ...[
                         const SizedBox(width: 6),
                         _buildTypeChip('الموازي', StudyShift.parallel),
@@ -394,10 +337,34 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
               ),
             ),
 
-            // --- LIST CONTENT ---
+            // --- LIST CONTENT WITH FUTUREBUILDER ---
             Expanded(
-              child: filteredColleges.isEmpty
-                  ? Center(
+              child: FutureBuilder<List<CollegeModel>>(
+                future: _collegesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'حدث خطأ أثناء تحميل البيانات: ${snapshot.error}',
+                        style: const TextStyle(
+                          fontFamily: 'Cairo',
+                          color: Colors.red,
+                        ),
+                      ),
+                    );
+                  }
+
+                  final allColleges = snapshot.data ?? [];
+                  final filteredColleges = _applyFilters(allColleges);
+
+                  if (filteredColleges.isEmpty) {
+                    return Center(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(20),
                         child: Column(
@@ -428,32 +395,37 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
                           ],
                         ),
                       ),
-                    )
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      itemCount: filteredColleges.length,
-                      itemBuilder: (context, index) {
-                        final college = filteredColleges[index];
+                    );
+                  }
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: CollegeCardTile(
-                            college: college,
-                            selectedShift: _selectedShift,
-                            userGpa: widget.userGpa,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => CollegeDetailsScreen(college: college),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
+                  return ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    itemCount: filteredColleges.length,
+                    itemBuilder: (context, index) {
+                      final college = filteredColleges[index];
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: CollegeCardTile(
+                          college: college,
+                          selectedShift: _selectedShift,
+                          userGpa: widget.userGpa,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CollegeDetailsScreen(college: college),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -461,7 +433,6 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
     );
   }
 
-  // Application shift selection chips
   Widget _buildTypeChip(String label, StudyShift shift) {
     final bool isSelected = _selectedShift == shift;
     return ChoiceChip(

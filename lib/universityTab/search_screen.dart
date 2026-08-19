@@ -30,7 +30,7 @@ class _SearchScreenState extends State<SearchScreen> {
   // Dummy Dataset using CollegeModel with ShiftInfo
   final List<CollegeModel> _allColleges = [
     const CollegeModel(
-      id: 'col_01',
+      id:1,
       name: 'كلية الطب البشري',
       universityName: 'جامعة بغداد',
       city: 'بغداد',
@@ -46,10 +46,10 @@ class _SearchScreenState extends State<SearchScreen> {
       recognitionDocNumber: '101/2000',
       departments: ['الطب العام', 'الجراحة', 'الأطفال'],
       latitude: 33.3128,
-      longitude: 44.3615,
+      longitude: 44.3615,      
     ),
     const CollegeModel(
-      id: 'col_02',
+      id: 2,
       name: 'كلية الهندسة - قسم البرمجيات',
       universityName: 'الجامعة التكنولوجية',
       city: 'بغداد',
@@ -65,10 +65,10 @@ class _SearchScreenState extends State<SearchScreen> {
       recognitionDocNumber: '102/2001',
       departments: ['هندسة البرمجيات', 'هندسة الحواسيب'],
       latitude: 33.3152,
-      longitude: 44.4468,
+      longitude: 44.4468,      
     ),
     const CollegeModel(
-      id: 'col_03',
+      id: 3,
       name: 'كلية الهندسة',
       universityName: 'جامعة بابل',
       city: 'بابل',
@@ -84,9 +84,10 @@ class _SearchScreenState extends State<SearchScreen> {
       departments: ['هندسة المدني', 'هندسة الكهرباء', 'هندسة الميكانيك'],
       latitude: 32.4682,
       longitude: 44.4305,
+      
     ),
     const CollegeModel(
-      id: 'col_04',
+      id: 4,
       name: 'كلية الصيدلة',
       universityName: 'جامعة البصرة',
       city: 'البصرة',
@@ -102,10 +103,10 @@ class _SearchScreenState extends State<SearchScreen> {
       recognitionDocNumber: '304/2005',
       departments: ['الصيدلانيات', 'الكيمياء الصيدلانية'],
       latitude: 30.5081,
-      longitude: 47.7835,
+      longitude: 47.7835,      
     ),
     const CollegeModel(
-      id: 'col_05',
+      id: 5,
       name: 'كلية طب الأسنان',
       universityName: 'جامعة المستنصرية',
       city: 'بغداد',
