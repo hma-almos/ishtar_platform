@@ -107,12 +107,11 @@ class _AdmissionSearchScreenState extends State<AdmissionSearchScreen> {
             _selectedInterest!.isNotEmpty &&
             _selectedInterest != 'الكل') {
           final matchesDept = college.departments
-              .any((d) => d.contains(_selectedInterest!));
+              .any((d) => d.name.contains(_selectedInterest!));
           final matchesCareer = college.careerFields
               .any((c) => c.contains(_selectedInterest!));
           if (!matchesDept && !matchesCareer) return false;
         }
-
         // Shift Availability Filter
         final ShiftInfo? shiftData = college.getShift(effectiveShift);
         if (shiftData == null) return false;

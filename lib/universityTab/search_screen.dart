@@ -44,7 +44,7 @@ class _SearchScreenState extends State<SearchScreen> {
       careerFields: ['مستشفيات', 'عيادات خاصة', 'مراكز بحثية'],
       establishedYear: '1927',
       recognitionDocNumber: '101/2000',
-      departments: ['الطب العام', 'الجراحة', 'الأطفال'],
+      departments: [],
       latitude: 33.3128,
       longitude: 44.3615,      
     ),
@@ -63,7 +63,7 @@ class _SearchScreenState extends State<SearchScreen> {
       careerFields: ['تطوير التطبيقات', 'إدارة الشبكات', 'الأمن السيبراني'],
       establishedYear: '1975',
       recognitionDocNumber: '102/2001',
-      departments: ['هندسة البرمجيات', 'هندسة الحواسيب'],
+      departments: [],
       latitude: 33.3152,
       longitude: 44.4468,      
     ),
@@ -81,7 +81,7 @@ class _SearchScreenState extends State<SearchScreen> {
       careerFields: ['التصميم الهندسي', 'إدارة المشاريع'],
       establishedYear: '1993',
       recognitionDocNumber: '4512',
-      departments: ['هندسة المدني', 'هندسة الكهرباء', 'هندسة الميكانيك'],
+      departments: [],
       latitude: 32.4682,
       longitude: 44.4305,
       
@@ -101,7 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
       careerFields: ['المستشفيات', 'الصيدليات', 'مصانع الأدوية'],
       establishedYear: '1999',
       recognitionDocNumber: '304/2005',
-      departments: ['الصيدلانيات', 'الكيمياء الصيدلانية'],
+      departments: [],
       latitude: 30.5081,
       longitude: 47.7835,      
     ),
@@ -119,7 +119,7 @@ class _SearchScreenState extends State<SearchScreen> {
       careerFields: ['عيادات الأسنان', 'المستشفيات العامة'],
       establishedYear: '2000',
       recognitionDocNumber: '505/2010',
-      departments: ['صناعة الأسنان', 'جراحة الفك والأسنان'],
+      departments: [],
       latitude: 33.3386,
       longitude: 44.3939,
     ),
@@ -141,7 +141,7 @@ class _SearchScreenState extends State<SearchScreen> {
       final queryLower = _searchQuery.toLowerCase();
       final matchesQuery = college.name.toLowerCase().contains(queryLower) ||
           college.universityName.toLowerCase().contains(queryLower) ||
-          college.departments.any((dep) => dep.toLowerCase().contains(queryLower));
+          college.departments.any((dep) => dep.name.toLowerCase().contains(queryLower));
 
       final matchesCategory =
           _selectedCategory == 'الكل' || college.city == _selectedCategory;

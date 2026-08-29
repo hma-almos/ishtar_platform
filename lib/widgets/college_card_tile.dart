@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ishtar_platform/Service/api_service.dart';
 import 'package:ishtar_platform/models/college_model.dart'; // Adjust path if needed
 
 class CollegeCardTile extends StatelessWidget {
@@ -147,44 +148,48 @@ class CollegeCardTile extends StatelessWidget {
               const SizedBox(width: 12),
 
               // 3. College Building Icon / Logo
-              _buildLogo(college.logoUrl, primaryColor),
+              buildLogo(ApiService().baseUrl+college.logoUrl, primaryColor,48),
             ],
           ),
         ),
       ),
     );
   }
+  static Widget buildLogo(String? url, Color primaryColor,double size) {
+  final bool hasUrl = url != null && url.isNotEmpty;
 
-  Widget _buildLogo(String? url, Color primaryColor) {
-    const double size = 48;
-    return Container(
+  if (hasUrl) {
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F4F8),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFD0DBE8), width: 1),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(11),
-        child: url != null && url.isNotEmpty
-            ? Image.network(
-                url,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Icon(
-                  Icons.account_balance_rounded,
-                  color: primaryColor,
-                  size: 26,
-                ),
-              )
-            : Icon(
-                Icons.account_balance_rounded,
-                color: primaryColor,
-                size: 26,
-              ),
+      child: Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _buildFallbackIcon(size, primaryColor),
       ),
     );
   }
+
+  return _buildFallbackIcon(size, primaryColor);
+}
+
+// Helper method for the bordered fallback icon container
+static Widget _buildFallbackIcon(double size, Color primaryColor) {
+  return Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      color: const Color(0xFFF0F4F8),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFD0DBE8), width: 1),
+    ),
+    child: Icon(
+      Icons.account_balance_rounded,
+      color: primaryColor,
+      size: 26,
+    ),
+  );
+}
 }

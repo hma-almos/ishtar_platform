@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String baseUrl="http://192.168.0.105:9030";
+  final String baseUrl="http://192.168.31.230:9030";
   final http.Client _client;
 
   ApiService({

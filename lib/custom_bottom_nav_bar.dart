@@ -19,8 +19,8 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   final List<NavItemData> _items = const [
     NavItemData(icon: Icons.school_rounded, label: 'الجامعات'),
     NavItemData(icon: Icons.menu_book_rounded, label: 'الكتب'),
-    NavItemData(icon: Icons.home_rounded, label: 'الرئيسية'),
-    NavItemData(icon: Icons.badge_rounded, label: 'الاساتذة'),
+    // NavItemData(icon: Icons.home_rounded, label: 'الرئيسية'),
+    // NavItemData(icon: Icons.badge_rounded, label: 'الاساتذة'),
     NavItemData(icon: Icons.more_horiz_rounded, label: 'المزيد'),
   ];
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ishtar_platform/Service/session.dart';
 import 'package:ishtar_platform/models/city_model.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -35,10 +36,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final List<CityModel> _governorates = CityModel.baseCities;
 
   @override
-  void initState() {
-    super.initState();
-    _loadExistingProfileImage();
+void initState() {
+  super.initState();
+  _loadExistingProfileImage();
+  _loadSessionData(); // Load default values from Session
+}
+
+Future<void> _loadSessionData() async {
+  // Fetch values from Session (adjust method names if your Session class uses different getters)
+  final String? savedName = Session.name;
+  final String? savedBranch = Session.branch;
+  final String? savedGender =  Session.gender;
+  final String? savedGrade =  Session.grade;
+  final String? savedCityName =  Session.city;
+
+  // Find matching CityModel instance from local governorates list
+  CityModel? matchedCity;
+  if (savedCityName != null) {
+    try {
+      matchedCity = _governorates.firstWhere(
+        (city) => city.name == savedCityName,
+      );
+    } catch (_) {
+      matchedCity = null;
+    }
   }
+
+  if (!mounted) return;
+
+  setState(() {
+    if (savedName != null && savedName.isNotEmpty) {
+      _nameController.text = savedName;
+    }
+    if (savedBranch != null && savedBranch.isNotEmpty) {
+      _selectedBranch = savedBranch;
+    }
+    if (savedGender != null && savedGender.isNotEmpty) {
+      _selectedGender = savedGender;
+    }
+    if (savedGrade != null && _grades.contains(savedGrade)) {
+      _selectedGrade = savedGrade;
+    }
+    if (matchedCity != null) {
+      _selectedGovernorate = matchedCity;
+    }
+  });
+}
 
   // Load image on screen startup if it was saved previously
   Future<void> _loadExistingProfileImage() async {
@@ -390,8 +433,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Save profile logic
+                    onPressed: () async {
+                     await Session.save(
+                        name: _nameController.text,
+                        gender: _selectedGender,
+                        city: _selectedGovernorate?.name,
+                        grade: _selectedGrade,
+                        branch: _selectedBranch,
+                      );
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop(true);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:ishtar_platform/Service/api_service.dart';
+import 'package:ishtar_platform/models/department.dart';
+import 'package:ishtar_platform/widgets/college_card_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ishtar_platform/models/college_model.dart'; // Adjust path if needed
 
@@ -178,29 +181,86 @@ class CollegeDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
               ],
 
-              // --- DEPARTMENTS SECTION ---
+             // --- DEPARTMENTS SECTION ---
               if (college.departments.isNotEmpty) ...[
                 _buildSectionCard(
                   title: 'الأقسام المتاحة',
                   icon: Icons.account_tree_rounded,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  child: Column(
                     children: college.departments.map((dept) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: primaryColor.withOpacity(0.2)),
-                        ),
-                        child: Text(
-                          dept,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: primaryColor,
-                            fontFamily: 'Cairo',
+                      final hasGpa = dept.minimumGpa != null && dept.minimumGpa! > 0;
+
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _showDepartmentDetails(context, dept, primaryColor),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4F7FA),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: primaryColor.withOpacity(0.12),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.school_rounded,
+                                    size: 16,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    dept.name,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF0F2C4D),
+                                      fontFamily: 'Cairo',
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                                if (hasGpa) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '%${dept.minimumGpa}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.chevron_left_rounded,
+                                  color: Colors.grey[400],
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -209,7 +269,6 @@ class CollegeDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
               ],
-
               // --- CAREER FIELDS SECTION ---
               if (college.careerFields.isNotEmpty) ...[
                 _buildSectionCard(
@@ -276,7 +335,7 @@ class CollegeDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'المحافظة / المدينة',
+                        college.address??"المحافظة/المدينة",
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey[600],
@@ -348,33 +407,7 @@ class CollegeDetailsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F4F8),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFD0DBE8), width: 1),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(13),
-                  child: college.logoUrl.isNotEmpty
-                      ? Image.network(
-                          college.logoUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.account_balance_rounded,
-                            color: primaryColor,
-                            size: 30,
-                          ),
-                        )
-                      : Icon(
-                          Icons.account_balance_rounded,
-                          color: primaryColor,
-                          size: 30,
-                        ),
-                ),
-              ),
+              CollegeCardTile.buildLogo(ApiService().baseUrl+college.logoUrl, primaryColor, 60),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -416,7 +449,133 @@ class CollegeDetailsScreen extends StatelessWidget {
       ),
     );
   }
+// Helper method to display department details in a Bottom Sheet
+void _showDepartmentDetails(BuildContext context, Department dept, Color primaryColor) {
+  final hasGpa = dept.minimumGpa != null && dept.minimumGpa! > 0;
 
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag Indicator Bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Title and GPA Badge Row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      dept.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F2C4D),
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ),
+                  if (hasGpa) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '%${dept.minimumGpa}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'Cairo',
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const Divider(height: 24),
+
+              // Description Section
+              const Text(
+                'الوصف والتفاصيل',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                (dept.description != null && dept.description!.trim().isNotEmpty)
+                    ? dept.description!
+                    : 'لا يوجد وصف متاح لهذا القسم حالياً.',
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.6,
+                  color: Colors.black87,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Close Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text(
+                    'إغلاق',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
   Widget _buildMetaInfo(String label, String value) {
     return Column(
       children: [

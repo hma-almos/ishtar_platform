@@ -1,3 +1,4 @@
+import 'package:ishtar_platform/models/department.dart';
 
 enum StudyShift { morning, parallel, evening }
 
@@ -11,11 +12,12 @@ class ShiftInfo {
     required this.shift,
     required this.requiredGpa,
     this.cost = 0,
-    this.id=0,
+    this.id = 0,
   });
 
   factory ShiftInfo.fromJson(Map<String, dynamic> json) {
     return ShiftInfo(
+      id: (json['id'] as num?)?.toInt() ?? 0,
       shift: _shiftFromString(json['shift'] as String? ?? 'morning'),
       requiredGpa: (json['requiredGpa'] ?? json['required_gpa'] as num?)?.toDouble() ?? 0.0,
       cost: (json['cost'] as num?)?.toInt() ?? 0,
@@ -24,6 +26,7 @@ class ShiftInfo {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'shift': shift.name,
       'requiredGpa': requiredGpa,
       'cost': cost,
@@ -54,7 +57,7 @@ class CollegeModel {
   final String establishedYear;
   final String recognitionDocNumber;
   final String? extraInfo;
-  final List<String> departments;
+  final List<Department> departments;
   final List<String> careerFields;
   final double latitude;
   final double longitude;
@@ -88,16 +91,14 @@ class CollegeModel {
     try {
       return shiftOptions.firstWhere((info) => info.shift == shift);
     } catch (_) {
-      // Fallback shift using root minimumGpa if shiftOptions isn't populated
-      if (shift == StudyShift.morning) {
-        return ShiftInfo(shift: StudyShift.morning, requiredGpa: shiftOptions[0].requiredGpa);
+      if (shift == StudyShift.morning && shiftOptions.isNotEmpty) {
+        return ShiftInfo(shift: StudyShift.morning, requiredGpa: shiftOptions.first.requiredGpa);
       }
       return null;
     }
   }
 
   factory CollegeModel.fromJson(Map<String, dynamic> json) {
-    // Extract university name from nested UniversityDto object
     String uniName = '';
     if (json['university'] is Map<String, dynamic>) {
       uniName = json['university']['name'] as String? ?? '';
@@ -105,16 +106,15 @@ class CollegeModel {
       uniName = json['universityName'] as String;
     }
 
-    // Extract department names from Set<DepartmentDto>
-    List<String> parsedDepartments = [];
+    // Safely parse full Department objects
+    List<Department> parsedDepartments = [];
     if (json['departments'] is List) {
-      parsedDepartments = (json['departments'] as List).map((e) {
-        if (e is Map<String, dynamic>) return e['name'] as String? ?? '';
-        return e.toString();
-      }).toList();
+      parsedDepartments = (json['departments'] as List)
+          .whereType<Map<String, dynamic>>()
+          .map((item) => Department.fromJson(item))
+          .toList();
     }
 
-    // Extract career field names from Set<CarrerFeildDto>
     List<String> parsedCareerFields = [];
     if (json['careerFields'] is List) {
       parsedCareerFields = (json['careerFields'] as List).map((e) {
@@ -124,6 +124,19 @@ class CollegeModel {
     }
 
     double rootGpa = (json['minimumGpa'] as num?)?.toDouble() ?? 0.0;
+
+    // Deduplicate shiftOptions by shift type or ID
+    final rawShifts = (json['shift'] as List<dynamic>?) ?? [];
+    final uniqueShiftsMap = <StudyShift, ShiftInfo>{};
+
+    for (var item in rawShifts) {
+      if (item is Map<String, dynamic>) {
+        final shiftInfo = ShiftInfo.fromJson(item);
+        uniqueShiftsMap.putIfAbsent(shiftInfo.shift, () => shiftInfo);
+      }
+    }
+
+    final parsedShiftOptions = uniqueShiftsMap.values.toList();
 
     return CollegeModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
@@ -143,12 +156,9 @@ class CollegeModel {
       gender: json['gender'] as String?,
       studyType: json['studyType'] as String?,
       address: json['address'] as String?,
-      shiftOptions: (json['shift'] as List<dynamic>?)
-              ?.map((e) => ShiftInfo.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [
-            ShiftInfo(shift: StudyShift.morning, requiredGpa: rootGpa)
-          ],
+      shiftOptions: parsedShiftOptions.isNotEmpty
+          ? parsedShiftOptions
+          : [ShiftInfo(shift: StudyShift.morning, requiredGpa: rootGpa)],
     );
   }
 
@@ -164,7 +174,7 @@ class CollegeModel {
       'establishedYear': establishedYear,
       'recognitionDocNumber': recognitionDocNumber,
       'extraInfo': extraInfo,
-      'departments': departments.map((d) => {'name': d}).toList(),
+      'departments': departments.map((d) => d.toJson()).toList(),
       'careerFields': careerFields.map((c) => {'name': c}).toList(),
       'latitude': latitude,
       'longitude': longitude,

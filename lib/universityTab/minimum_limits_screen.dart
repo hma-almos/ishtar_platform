@@ -106,7 +106,7 @@ class _MinimumLimitsScreenState extends State<MinimumLimitsScreen> {
 
       final matchesSpecialty = _selectedSpecialty == null ||
           college.name.contains(_selectedSpecialty!) ||
-          college.departments.any((dep) => dep.contains(_selectedSpecialty!));
+          college.departments.any((dep) => dep.name.contains(_selectedSpecialty!));
 
       return matchesGovernorate && matchesSpecialty;
     }).toList();

@@ -1,8 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:ishtar_platform/Service/api_service.dart';
+import 'package:ishtar_platform/Service/session.dart';
+import 'package:ishtar_platform/books/books.dart';
+import 'package:ishtar_platform/books/pdf_viewer_screen.dart';
 import 'package:ishtar_platform/notification_screen.dart';
 import 'package:ishtar_platform/profile_screen.dart';
+import 'package:ishtar_platform/settings/settings.dart';
 import 'package:path_provider/path_provider.dart';
 import 'custom_bottom_nav_bar.dart'; // Import your custom bottom bar widget
 import 'universityTab/universities_screen.dart';   // Index 0
@@ -17,23 +22,58 @@ class MainWrapperScreen extends StatefulWidget {
 }
 
 class _MainWrapperScreenState extends State<MainWrapperScreen> {
-  // Active selected tab index (starts at 0 for 'الجامعات')
   int _selectedIndex = 0;
   File? _profileImage;
+  String? name;
 
-  // List of screens corresponding to bottom nav tabs
-  final List<Widget> _pages =  [
-    UniversitiesScreen(),               // Index 0
-    _PlaceholderPage(title: 'الكتب'),   // Index 1
-    _PlaceholderPage(title: 'الرئيسية'), // Index 2
-    _PlaceholderPage(title: 'الاساتذة'), // Index 3
-    _PlaceholderPage(title: 'المزيد'),   // Index 4
-  ];
+  // Define your pages list inside initState or build, or map callback here
+  late final List<Widget> _pages;
+
   @override
-void initState() {
-  super.initState();
-  _loadExistingProfileImage();
-}
+  void initState() {
+    super.initState();
+    _loadAppBarUserData();
+    final baseurl= ApiService().baseUrl;
+    // Initialize the pages here to access BuildContext safely
+    _pages = [
+      const UniversitiesScreen(), // Index 0
+      
+      // Index 1: Subjects Grid with Offline PDF handling
+      SubjectsGridBody(
+        onSubjectTap: (subjectTitle) {
+          // Map each subject name to its backend PDF URL
+          final Map<String, String> backendPdfUrls = {
+            'اسلامية': '$baseurl/pdfs/islamic.pdf',
+            'الرياضيات': '$baseurl/pdfs/math.pdf',
+          
+            'الكيمياء': '$baseurl/pdfs/chemistry.pdf',
+            'الاحياء': '$baseurl/pdfs/biology.pdf',
+            'اللغة العربية': '$baseurl/pdfs/arabic.pdf',
+            'الفيزياء': '$baseurl/pdfs/physics.pdf',
+            'اللغة الانجليزية': '$baseurl/pdfs/english.pdf',
+          };
+
+          final url = backendPdfUrls[subjectTitle];
+
+          if (url != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PdfOfflineViewerScreen(
+                  title: subjectTitle,
+                  pdfUrl: url,
+                ),
+              ),
+            );
+          }
+        },
+      ),
+      
+      // const _PlaceholderPage(title: 'الرئيسية'), // Index 2
+      // const _PlaceholderPage(title: 'الاساتذة'), // Index 3
+      StyledSettingsBody()   // Index 4
+    ];
+  }
 
 Future<void> _loadExistingProfileImage() async {
   final Directory appDocDir = await getApplicationDocumentsDirectory();
@@ -88,18 +128,24 @@ Future<void> _loadExistingProfileImage() async {
 
                 // Profile Section: Avatar + User Name
                 GestureDetector(
-                  onTap: () {
-                   Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ProfileScreen(),
-                ),
-              );
+                  onTap: () async {
+                  final bool? result = await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+
+                    // If the child screen popped with 'true', refresh the AppBar state
+                    if (result == true) {
+                      setState(() {
+                        // Re-fetch or assign updated name/pic from Session or State
+                        _loadAppBarUserData(); 
+                      });
+                    }
                   },
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'أحمد علي', // Replace with user's dynamic name variable
+                       Text(
+                        name??'guest', // Replace with user's dynamic name variable
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 15,
@@ -148,6 +194,11 @@ Future<void> _loadExistingProfileImage() async {
         },
       ),
     );
+  }
+
+  void _loadAppBarUserData() {
+    _loadExistingProfileImage();
+    name=Session.name;
   }
 }
 

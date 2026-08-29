@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:ishtar_platform/Service/session.dart';
 import 'package:ishtar_platform/app_shell.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Session.init();
   runApp(const MyApp());
 }
 

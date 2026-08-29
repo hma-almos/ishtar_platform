@@ -32,32 +32,32 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   // Mock Notification Data
   final List<NotificationItem> _notifications = [
+    // NotificationItem(
+    //   id: '1',
+    //   title: 'تم إضافة درس جديد',
+    //   body: 'تم رفع محاضرة جديدة في مادة الرياضيات للصف السادس الإعدادي. يمكنك الآن الدخول ومتابعة الدرس كاملاً وتنزيل الملفات المرفقة.',
+    //   timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
+    //   isRead: false,
+    // ),
+    // NotificationItem(
+    //   id: '2',
+    //   title: 'تذكير بالامتحان',
+    //   body: 'لا تنسى موعد الاختبار التجريبي يوم غد في تمام الساعة 8:00 مساءً. يرجى التأكد من الجاهزية والربط الجيد بالإنترنت.',
+    //   timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+    //   isRead: false,
+    // ),
+    // NotificationItem(
+    //   id: '3',
+    //   title: 'تم تحديث الملف الشخصي',
+    //   body: 'تم حفظ معلوماتك الشخصية والصورة الرمزية بنجاح.',
+    //   timestamp: DateTime.now().subtract(const Duration(days: 1)),
+    //   isRead: true,
+    // ),
     NotificationItem(
       id: '1',
-      title: 'تم إضافة درس جديد',
-      body: 'تم رفع محاضرة جديدة في مادة الرياضيات للصف السادس الإعدادي. يمكنك الآن الدخول ومتابعة الدرس كاملاً وتنزيل الملفات المرفقة.',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '2',
-      title: 'تذكير بالامتحان',
-      body: 'لا تنسى موعد الاختبار التجريبي يوم غد في تمام الساعة 8:00 مساءً. يرجى التأكد من الجاهزية والربط الجيد بالإنترنت.',
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '3',
-      title: 'تم تحديث الملف الشخصي',
-      body: 'تم حفظ معلوماتك الشخصية والصورة الرمزية بنجاح.',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '4',
       title: 'أهلاً بك في منصة عشتار',
       body: 'نتمنى لك رحلة تعليمية ممتعة وناجحة معنا. لا تتردد في التواصل معنا في حال وجود أي استفسار.',
-      timestamp: DateTime.now().subtract(const Duration(days: 3)),
+      timestamp: DateTime(2026,8,29),
       isRead: true,
     ),
   ];
@@ -399,19 +399,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.body,
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 13,
-                        color: fieldTextColor.withOpacity(0.8),
-                        height: 1.4,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ),                    
                   ],
                 ),
               ),
